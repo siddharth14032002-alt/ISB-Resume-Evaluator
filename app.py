@@ -1,5 +1,5 @@
 import streamlit as st
-from google import genai
+import google.generativeai as genai
 import pypdf
 
 # Page Setup
@@ -37,12 +37,13 @@ if uploaded_file and api_key:
                 for page in pdf_reader.pages:
                     resume_text += page.extract_text() + "\n"
 
-                # Call Gemini API
-                client = genai.Client(api_key=api_key)
-                response = client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=[SYSTEM_PROMPT, f"Resume Text:\n{resume_text}"]
-                )
+                # Configure Gemini API
+                genai.configure(api_key=api_key)
+                model = genai.GenerativeModel('gemini-1.5-flash')
+
+                # Generate Evaluation
+                prompt = f"{SYSTEM_PROMPT}\n\nResume Text:\n{resume_text}"
+                response = model.generate_content(prompt)
 
                 st.success("Evaluation Complete!")
                 st.markdown("---")
