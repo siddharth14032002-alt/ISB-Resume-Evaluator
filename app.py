@@ -40,7 +40,7 @@ if uploaded_file and api_key:
                 # Call Gemini API
                 client = genai.Client(api_key=api_key)
                 response = client.models.generate_content(
-                    model="gemini-1.5-flash",
+                    model="gemini-2.0-flash",
                     contents=[SYSTEM_PROMPT, f"Resume Text:\n{resume_text}"]
                 )
 
