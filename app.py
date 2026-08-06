@@ -8,8 +8,8 @@ st.set_page_config(page_title="ISB Batch MBB Resume Evaluator", page_icon="💼"
 st.title("🎯 ISB Batch MBB Resume Evaluator")
 st.markdown("Upload your resume (PDF) to get an MBB-tailored score, feedback, and line-by-line bullet rewrites.")
 
-# Sidebar for OpenAI API Key
-api_key = st.sidebar.text_input("Enter OpenAI API Key", type="password", help="Get your key from platform.openai.com")
+# Sidebar for OpenRouter API Key
+api_key = st.sidebar.text_input("Enter OpenRouter API Key", type="password", help="Get your free key from openrouter.ai")
 
 # MBB Evaluation Prompt
 SYSTEM_PROMPT = """
@@ -29,7 +29,7 @@ uploaded_file = st.file_uploader("Upload Resume (PDF)", type=["pdf"])
 
 if uploaded_file and api_key:
     if st.button("Evaluate Resume"):
-        with st.spinner("Analyzing resume against MBB benchmarks with GPT..."):
+        with st.spinner("Analyzing resume against MBB benchmarks..."):
             try:
                 # Read PDF text
                 pdf_reader = pypdf.PdfReader(uploaded_file)
@@ -37,12 +37,15 @@ if uploaded_file and api_key:
                 for page in pdf_reader.pages:
                     resume_text += page.extract_text() + "\n"
 
-                # Initialize OpenAI client
-                client = OpenAI(api_key=api_key)
+                # Initialize OpenAI client pointing to OpenRouter
+                client = OpenAI(
+                    base_url="https://openrouter.ai/api/v1",
+                    api_key=api_key,
+                )
 
-                # Call ChatGPT API
+                # Call free Llama 3.3 70B model via OpenRouter
                 response = client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model="meta-llama/llama-3.3-70b-instruct:free",
                     messages=[
                         {"role": "system", "content": SYSTEM_PROMPT},
                         {"role": "user", "content": f"Resume Text:\n{resume_text}"}
@@ -57,4 +60,4 @@ if uploaded_file and api_key:
                 st.error(f"Error processing resume: {str(e)}")
 
 elif uploaded_file and not api_key:
-    st.info("👈 Please enter your OpenAI API Key in the sidebar to get started.")
+    st.info("👈 Please enter your OpenRouter API Key in the sidebar to get started.")
