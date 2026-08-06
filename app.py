@@ -43,9 +43,9 @@ if uploaded_file and api_key:
                     api_key=api_key,
                 )
 
-                # Call free Llama 3.3 70B model via OpenRouter
+                # Call OpenRouter Auto-Free Router
                 response = client.chat.completions.create(
-                    model="meta-llama/llama-3.3-70b-instruct:free",
+                    model="openrouter/free",
                     messages=[
                         {"role": "system", "content": SYSTEM_PROMPT},
                         {"role": "user", "content": f"Resume Text:\n{resume_text}"}
