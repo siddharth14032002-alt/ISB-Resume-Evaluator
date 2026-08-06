@@ -39,7 +39,7 @@ if uploaded_file and api_key:
 
                 # Configure Gemini API
                 genai.configure(api_key=api_key)
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                model = genai.GenerativeModel('gemini-2.0-flash')
 
                 # Generate Evaluation
                 prompt = f"{SYSTEM_PROMPT}\n\nResume Text:\n{resume_text}"
