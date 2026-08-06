@@ -8,8 +8,8 @@ st.set_page_config(page_title="ISB Batch MBB Resume Evaluator", page_icon="💼"
 st.title("🎯 ISB Batch MBB Resume Evaluator")
 st.markdown("Upload your resume (PDF) to get an MBB-tailored score, feedback, and line-by-line bullet rewrites.")
 
-# Sidebar for OpenRouter API Key
-api_key = st.sidebar.text_input("Enter OpenRouter API Key", type="password", help="Get your free key from openrouter.ai")
+# Retrieve key securely from Streamlit Secrets
+api_key = st.secrets.get("OPENROUTER_API_KEY")
 
 # MBB Evaluation Prompt
 SYSTEM_PROMPT = """
@@ -27,37 +27,39 @@ Maintain a candid, peer-like, and highly actionable tone.
 
 uploaded_file = st.file_uploader("Upload Resume (PDF)", type=["pdf"])
 
-if uploaded_file and api_key:
+if uploaded_file:
     if st.button("Evaluate Resume"):
-        with st.spinner("Analyzing resume against MBB benchmarks..."):
-            try:
-                # Read PDF text
-                pdf_reader = pypdf.PdfReader(uploaded_file)
-                resume_text = ""
-                for page in pdf_reader.pages:
-                    resume_text += page.extract_text() + "\n"
+        if not api_key:
+            st.error("API Key configuration error. Please contact the administrator.")
+        else:
+            with st.spinner("Analyzing resume against MBB benchmarks..."):
+                try:
+                    # Read PDF text
+                    pdf_reader = pypdf.PdfReader(uploaded_file)
+                    resume_text = ""
+                    for page in pdf_reader.pages:
+                        resume_text += page.extract_text() + "\n"
 
-                # Initialize OpenAI client pointing to OpenRouter
-                client = OpenAI(
-                    base_url="https://openrouter.ai/api/v1",
-                    api_key=api_key,
-                )
+                    # Initialize OpenAI client using hidden backend secret
+                    client = OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=api_key,
+                    )
 
-                # Call OpenRouter Auto-Free Router
-                response = client.chat.completions.create(
-                    model="openrouter/free",
-                    messages=[
-                        {"role": "system", "content": SYSTEM_PROMPT},
-                        {"role": "user", "content": f"Resume Text:\n{resume_text}"}
-                    ]
-                )
+                    # Call OpenRouter Auto-Free Router
+                    response = client.chat.completions.create(
+                        model="openrouter/free",
+                        messages=[
+                            {"role": "system", "content": SYSTEM_PROMPT},
+                            {"role": "user", "content": f"Resume Text:\n{resume_text}"}
+                        ]
+                    )
 
-                st.success("Evaluation Complete!")
-                st.markdown("---")
-                st.markdown(response.choices[0].message.content)
+                    st.success("Evaluation Complete!")
+                    st.markdown("---")
+                    st.markdown(response.choices[0].message.content)
 
-            except Exception as e:
-                st.error(f"Error processing resume: {str(e)}")
-
-elif uploaded_file and not api_key:
-    st.info("👈 Please enter your OpenRouter API Key in the sidebar to get started.")
+                except Exception as e:
+                    st.error(f"Error processing resume: {str(e)}")
+else:
+    st.info("👆 Upload your resume PDF above to get started.")
