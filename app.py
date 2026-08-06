@@ -1,5 +1,5 @@
 import streamlit as st
-import google.generativeai as genai
+from openai import OpenAI
 import pypdf
 
 # Page Setup
@@ -8,8 +8,8 @@ st.set_page_config(page_title="ISB Batch MBB Resume Evaluator", page_icon="💼"
 st.title("🎯 ISB Batch MBB Resume Evaluator")
 st.markdown("Upload your resume (PDF) to get an MBB-tailored score, feedback, and line-by-line bullet rewrites.")
 
-# Sidebar for API Key
-api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
+# Sidebar for OpenAI API Key
+api_key = st.sidebar.text_input("Enter OpenAI API Key", type="password", help="Get your key from platform.openai.com")
 
 # MBB Evaluation Prompt
 SYSTEM_PROMPT = """
@@ -29,28 +29,32 @@ uploaded_file = st.file_uploader("Upload Resume (PDF)", type=["pdf"])
 
 if uploaded_file and api_key:
     if st.button("Evaluate Resume"):
-        with st.spinner("Analyzing resume against MBB benchmarks..."):
+        with st.spinner("Analyzing resume against MBB benchmarks with GPT..."):
             try:
-                # Read PDF
+                # Read PDF text
                 pdf_reader = pypdf.PdfReader(uploaded_file)
                 resume_text = ""
                 for page in pdf_reader.pages:
                     resume_text += page.extract_text() + "\n"
 
-                # Configure Gemini API
-                genai.configure(api_key=api_key)
-                model = genai.GenerativeModel('gemini-2.0-flash')
+                # Initialize OpenAI client
+                client = OpenAI(api_key=api_key)
 
-                # Generate Evaluation
-                prompt = f"{SYSTEM_PROMPT}\n\nResume Text:\n{resume_text}"
-                response = model.generate_content(prompt)
+                # Call ChatGPT API
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": f"Resume Text:\n{resume_text}"}
+                    ]
+                )
 
                 st.success("Evaluation Complete!")
                 st.markdown("---")
-                st.markdown(response.text)
+                st.markdown(response.choices[0].message.content)
 
             except Exception as e:
                 st.error(f"Error processing resume: {str(e)}")
 
 elif uploaded_file and not api_key:
-    st.info("👈 Please enter your Gemini API Key in the sidebar to get started.")
+    st.info("👈 Please enter your OpenAI API Key in the sidebar to get started.")
